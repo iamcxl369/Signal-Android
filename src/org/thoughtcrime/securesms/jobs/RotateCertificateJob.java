@@ -17,6 +17,7 @@ import java.io.IOException;
 import javax.inject.Inject;
 
 import androidx.work.Data;
+import androidx.work.WorkerParameters;
 
 @SuppressWarnings("WeakerAccess")
 public class RotateCertificateJob extends ContextJob implements InjectableType {
@@ -27,8 +28,8 @@ public class RotateCertificateJob extends ContextJob implements InjectableType {
 
   @Inject transient SignalServiceAccountManager accountManager;
 
-  public RotateCertificateJob() {
-    super(null, null);
+  public RotateCertificateJob(@NonNull Context context, @NonNull WorkerParameters workerParameters) {
+    super(context, workerParameters);
   }
 
   public RotateCertificateJob(Context context) {
@@ -55,8 +56,10 @@ public class RotateCertificateJob extends ContextJob implements InjectableType {
 
   @Override
   public void onRun() throws IOException {
-    byte[] certificate = accountManager.getSenderCertificate();
-    TextSecurePreferences.setUnidentifiedAccessCertificate(context, certificate);
+    synchronized (RotateCertificateJob.class) {
+      byte[] certificate = accountManager.getSenderCertificate();
+      TextSecurePreferences.setUnidentifiedAccessCertificate(context, certificate);
+    }
   }
 
   @Override
